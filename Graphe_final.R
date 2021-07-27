@@ -9,7 +9,7 @@ couleurs2 <- adjustcolor( c("grey", "yellowgreen", "lightgreen", "pink","lightbl
 
 # Data reading
 
-data_raw <- read.csv2("D:/REORG-Neuropsy/Data_Neuropsy_full.csv", header=T, as.is=T,sep=';')
+data_raw <- read.csv2("Work_directory/Data.csv", header=T, as.is=T,sep=';') ## set to your path
 data_raw[1:28,] <- transform(data_raw[1:28,], PAT = sprintf('L%s', PAT))
 data_raw[29:51,] <- transform(data_raw[29:51,], PAT = sprintf('R%s', PAT))
 
@@ -19,7 +19,6 @@ data[,15:47] <- lapply(data[,15:47] , as.numeric)
 data[,1:14] <- lapply(data[,1:14] , as.factor)
 
 data[,15:47] <- scale(data[,15:47])
-
 
 scores <- names(data)
 
@@ -39,9 +38,7 @@ eng <- 2-as.numeric(as.factor(data$ENG_bin))
 nam <- 2-as.numeric(as.factor(data$DIFF_NAM_1))
 
 
-
 ################################################################################
-## Fonctions
 # Simple Matching Coefficient
 
 binary_table = function(x, y) {
@@ -62,8 +59,7 @@ SMC = function(x, y) {
 
 
 ################################################################################
-# PRI, VMI, VCI, AMI, NAM, SFL, PFL, TMT, STR
-
+# dataset : PRI, VMI, VCI, AMI, NAM, SFL, PFL, TMT, STR
 
 distance_1 <- as.matrix(dist(data[c("PRI","VMI","VCI","AMI","NAM","SFL","PFL","TMT","STR")], diag = TRUE))
 proximite_1 <- (max(distance_1) - distance_1)/(max(distance_1)-min(distance_1))
@@ -73,12 +69,12 @@ rownames(proximite_1)<-data$PAT
 
 graphe <- graph_from_adjacency_matrix(proximite_1, weighted=T, mode="undirected", diag=F)
 layouts <- layout_with_fr(graphe)
-titre = "Sous-jeu"
+titre = "dataset"
 
 
-# Graphe original
+# Original network
 plot(graphe, edge.arrow.mode=0,vertex.color=couleurs1[as.factor(data$HEM)],vertex.label.color="black",vertex.label.cex=.6, layout=layouts)
-title(main = paste("Graphe de patients :",titre), font.main= 1)
+title(main = paste("Individuals graph:",titre), font.main= 1)
 legend(x=-1.5, y=0, c("Left", "Right"), pch=21, col="#777777", pt.bg=couleurs1, pt.cex=2, cex=.8, bty="n", ncol=1)
 
 # Weighted Community detection based on Multilevel
@@ -100,15 +96,14 @@ SMCnam <- round(SMC(com,1-nam),digits=2)
 
 plot(louvain, graphe ,edge.arrow.mode=0, vertex.label.cex=.6, layout=layouts)
 title(main = paste("Multilevel/Louvain :",titre), 
-      sub = paste("SMC Durée :",SMCdur," SMC Sclérose :",SMChs," SMC Sévérité :",SMCsev,
-                  "\n SMC Genre :",SMCgen," SMC Hémisphère :",SMChem," SMC Latéralité :",SMChds,
+      sub = paste("SMC Duration :",SMCdur," SMC Sclerosis :",SMChs," SMC Severity :",SMCsev,
+                  "\n SMC Genre :",SMCgen," SMC Hémisphère :",SMChem," SMC Laterality :",SMChds,
                   "\n SMC BDI :",SMCbdi," SMC STA :",SMCsta," SMC STB :",SMCstb,
                   "\n SMC Thy :",SMCthy," SMC Engel :",SMCeng," SMC Diff_NAM :",SMCnam
       ))
 
 
-## Enregistrement du graphe
-# attributs
+# graph features
 graphe <- set_vertex_attr(graph = graphe, name = "DUR_bin", index=V(graphe), value = data$DUR_bin)
 graphe <- set_vertex_attr(graph = graphe, name = "HS", index=V(graphe), value = data$HS)
 graphe <- set_vertex_attr(graph = graphe, name = "SEV_bin", index=V(graphe), value = data$SEV_bin)
@@ -121,17 +116,15 @@ graphe <- set_vertex_attr(graph = graphe, name = "STB_bin", index=V(graphe), val
 graphe <- set_vertex_attr(graph = graphe, name = "THY_bin", index=V(graphe), value = data$THY_bin)
 graphe <- set_vertex_attr(graph = graphe, name = "ENG_bin", index=V(graphe), value = data$ENG_bin)
 graphe <- set_vertex_attr(graph = graphe, name = "DIFF_NAM_1", index=V(graphe), value = data$DIFF_NAM_1)
-write_graph(graphe, "./graphe_Patients_ENG.graphml" , format = "graphml")
-##
-
+# write_graph(graphe, "./graphe_individuals_ENG.graphml" , format = "graphml")
 
 
 par(mfrow=c(1,2))
 
 plot(louvain, graphe ,edge.arrow.mode=0, vertex.label.cex=.6, layout=layouts)
 title(main = paste("Multilevel/Louvain :",titre), 
-      sub = paste("SMC Durée :",SMCdur," SMC Sclérose :",SMChs," SMC Sévérité :",SMCsev,
-                  "\n SMC Genre :",SMCgen," SMC Hémisphère :",SMChem," SMC Latéralité :",SMChds,
+      sub = paste("SMC Duration :",SMCdur," SMC Sclerosis :",SMChs," SMC Severity :",SMCsev,
+                  "\n SMC Genre :",SMCgen," SMC Hémisphère :",SMChem," SMC Laterality :",SMChds,
                   "\n SMC BDI :",SMCbdi," SMC STA :",SMCsta," SMC STB :",SMCstb,
                   "\n SMC Thy :",SMCthy," SMC Engel :",SMCeng," SMC Diff_NAM :",SMCnam
       ))
@@ -155,8 +148,8 @@ SMCeng <- 1-round(SMC(com,1-eng),digits=2)
 SMCnam <- round(SMC(com,1-nam),digits=2)
 
 title(main = paste("Spectral clustering :",titre),
-      sub = paste("SMC Durée :",SMCdur," SMC Sclérose :",SMChs," SMC Sévérité :",SMCsev,
-                  "\n SMC Genre :",SMCgen," SMC Hémisphère :",SMChem," SMC Latéralité :",SMChds,
+      sub = paste("SMC Duration :",SMCdur," SMC Sclerosis :",SMChs," SMC Severity :",SMCsev,
+                  "\n SMC Genre :",SMCgen," SMC Hémisphère :",SMChem," SMC Laterality :",SMChds,
                   "\n SMC BDI :",SMCbdi," SMC STA :",SMCsta," SMC STB :",SMCstb,
                   "\n SMC Thy :",SMCthy," SMC Engel :",SMCeng," SMC Diff_NAM :",SMCnam
       ))
@@ -186,14 +179,14 @@ SMCeng <- 1-round(SMC(com,1-eng),digits=2)
 SMCnam <- 1-round(SMC(com,1-nam),digits=2)
 
 title(main = paste("Spinglass :",titre),
-      sub = paste("SMC Durée :",SMCdur," SMC Sclérose :",SMChs," SMC Sévérité :",SMCsev,
-                  "\n SMC Genre :",SMCgen," SMC Hémisphère :",SMChem," SMC Latéralité :",SMChds,
+      sub = paste("SMC Duration :",SMCdur," SMC Sclerosis :",SMChs," SMC Severity :",SMCsev,
+                  "\n SMC Genre :",SMCgen," SMC Hémisphère :",SMChem," SMC Laterality :",SMChds,
                   "\n SMC BDI :",SMCbdi," SMC STA :",SMCsta," SMC STB :",SMCstb,
                   "\n SMC Thy :",SMCthy," SMC Engel :",SMCeng," SMC Diff_NAM :",SMCnam
       ))
 
 ################################################################################
-# Sous-jeu VMI,NAM,TMT,AMI
+# Dataset : VMI,NAM,TMT,AMI
 
 eng_1 = subset(data,data$ENG_bin==1)[c("VMI","AMI","NAM","TMT")]
 eng_2 = subset(data,data$ENG_bin==2)[c("VMI","AMI","NAM","TMT")]
@@ -210,7 +203,7 @@ rownames(proximite_1)<-data$PAT
 graphe <- graph_from_adjacency_matrix(proximite_1, weighted=T, mode="undirected", diag=F)
 
 
-# attributs
+# features
 graphe <- set_vertex_attr(graph = graphe, name = "DUR_bin", index=V(graphe), value = data$DUR_bin)
 graphe <- set_vertex_attr(graph = graphe, name = "HS", index=V(graphe), value = data$HS)
 graphe <- set_vertex_attr(graph = graphe, name = "SEV_bin", index=V(graphe), value = data$SEV_bin)
@@ -223,18 +216,17 @@ graphe <- set_vertex_attr(graph = graphe, name = "STB_bin", index=V(graphe), val
 graphe <- set_vertex_attr(graph = graphe, name = "THY_bin", index=V(graphe), value = data$THY_bin)
 graphe <- set_vertex_attr(graph = graphe, name = "ENG_bin", index=V(graphe), value = data$ENG_bin)
 graphe <- set_vertex_attr(graph = graphe, name = "DIFF_NAM_1", index=V(graphe), value = data$DIFF_NAM_1)
-write_graph(graphe, "./graphe_Patients_NAM2.graphml" , format = "graphml")
-##
+# write_graph(graphe, "./graphe_Individuals_NAM2.graphml" , format = "graphml")
 
 
 layouts <- layout_with_fr(graphe)
-titre = "Sous-jeu"
+titre = "Dataset"
 
 par(mfrow=c(1,2))
 
-# Graphe original
+# Original network
 plot(graphe, edge.arrow.mode=0,vertex.color=couleurs1[as.factor(subset(data,data$ENG_bin==2)$HEM)],vertex.label.color="black",vertex.label.cex=.6, layout=layouts)
-title(main = paste("Graphe de patients :",titre), font.main= 1)
+title(main = paste("Individuals Graph:",titre), font.main= 1)
 legend(x=-1.5, y=0, c("Left", "Right"), pch=21, col="#777777", pt.bg=couleurs1, pt.cex=2, cex=.8, bty="n", ncol=1)
 
 
@@ -270,8 +262,8 @@ SMCnam <- round(SMC(com,1-nam),digits=2)
 
 plot(louvain, graphe ,edge.arrow.mode=0, vertex.label.cex=.6, layout=layouts)
 title(main = paste("Multilevel/Louvain :",titre), 
-      sub = paste("SMC Durée :",SMCdur," SMC Sclérose :",SMChs," SMC Sévérité :",SMCsev,
-                  "\n SMC Genre :",SMCgen," SMC Hémisphère :",SMChem," SMC Latéralité :",SMChds,
+      sub = paste("SMC Duration :",SMCdur," SMC Sclerosis :",SMChs," SMC Severity :",SMCsev,
+                  "\n SMC Genre :",SMCgen," SMC Hémisphère :",SMChem," SMC Laterality :",SMChds,
                   "\n SMC BDI :",SMCbdi," SMC STA :",SMCsta," SMC STB :",SMCstb,
                   "\n SMC Thy :",SMCthy," SMC Engel :",SMCeng," SMC Diff_NAM :",SMCnam
       ))
@@ -279,7 +271,7 @@ title(main = paste("Multilevel/Louvain :",titre),
 
 
 ################################################################################
-# Sous-jeu : VCI,NAM,SFL,AMI
+# Dataset : VCI,NAM,SFL,AMI
 
 distance_1 <- as.matrix(dist(data[c("VCI","AMI","NAM","SFL")], diag = TRUE))
 proximite_1 <- (max(distance_1) - distance_1)/(max(distance_1)-min(distance_1))
@@ -289,14 +281,13 @@ rownames(proximite_1)<-data$PAT
 
 graphe <- graph_from_adjacency_matrix(proximite_1, weighted=T, mode="undirected", diag=F)
 layouts <- layout_with_fr(graphe)
-titre = "Sous-jeu 5.1 réduit dif_nam"
+titre = "Dataset"
 
-# png(paste("Graphe_",scores,".png"), width=10, height=6, units="in", res=150)
 par(mfrow=c(1,2))
 
-# Graphe original
+# Original graph
 plot(graphe, edge.arrow.mode=0,vertex.color=couleurs1[as.factor(data$HEM)],vertex.label.color="black",vertex.label.cex=.6, layout=layouts)
-title(main = paste("Graphe de patients :",titre), font.main= 1)
+title(main = paste("Individuals graph :",titre), font.main= 1)
 legend(x=-1.5, y=0, c("Left", "Right"), pch=21, col="#777777", pt.bg=couleurs1, pt.cex=2, cex=.8, bty="n", ncol=1)
 
 # Weighted Community detection based on Multilevel
@@ -318,21 +309,18 @@ SMCnam <- round(SMC(com,1-nam),digits=2)
 
 plot(louvain, graphe ,edge.arrow.mode=0, vertex.label.cex=.6, layout=layouts)
 title(main = paste("Multilevel/Louvain :",titre), 
-      sub = paste("SMC Durée :",SMCdur," SMC Sclérose :",SMChs," SMC Sévérité :",SMCsev,
-                  "\n SMC Genre :",SMCgen," SMC Hémisphère :",SMChem," SMC Latéralité :",SMChds,
+      sub = paste("SMC Duration :",SMCdur," SMC Sclerosis :",SMChs," SMC Severity :",SMCsev,
+                  "\n SMC Genre :",SMCgen," SMC Hémisphère :",SMChem," SMC Laterality :",SMChds,
                   "\n SMC BDI :",SMCbdi," SMC STA :",SMCsta," SMC STB :",SMCstb,
                   "\n SMC Thy :",SMCthy," SMC Engel :",SMCeng," SMC Diff_NAM :",SMCnam
       ))
 
 
-
-
-
 ################################################################################
-# graphe de similarité basé sur la corrélation des tests neuropsy
+# cognitive graph based on correaltion
 ################################################################################
 
-########### Labels des groupes thématiques de tests ###########
+########### Thematic labels ###########
 
 # Verbal / Non-verbal
 Groupe1=c(1,2,1,2,1,1,1,2,1,1,1,1,2,2,2,1,1,1,1,2,2,2,2,2,2,1,1,1,1,2,1,1)
@@ -372,10 +360,10 @@ Label6 = Legend6[Groupe2]
 
 ################################################################################
 
-eng_1 = subset(data[,16:47],data$ENG_bin==1) # 30 patients (rmin = 0,49)
-eng_2 = subset(data[,16:47],data$ENG_bin==2) # 17 patients (rmin = 0,64)
-nam_1 = subset(data[,16:47],data$DIFF_NAM_1==1) # 28 patients (rmin = 0,51)
-nam_2 = subset(data[,16:47],data$DIFF_NAM_1==2) # 19 patients (rmin = 0,6)
+eng_1 = subset(data[,16:47],data$ENG_bin==1) # 30 patients
+eng_2 = subset(data[,16:47],data$ENG_bin==2) # 17 patients 
+nam_1 = subset(data[,16:47],data$DIFF_NAM_1==1) # 28 patients
+nam_2 = subset(data[,16:47],data$DIFF_NAM_1==2) # 19 patients
 
 df <- nam_2 # to change
 
@@ -398,7 +386,7 @@ graphe <- graph_from_adjacency_matrix(proximite, weighted=T, mode="undirected", 
 
 
 ################################################################################
-# construction des graphes
+# graph building
 
 graphe <- set_vertex_attr(graph = graphe, name = "z-score", index=V(graphe), value = colMeans(df))
 
@@ -417,13 +405,13 @@ graphe_compact = delete.vertices(graphe, Isolated)
 
 
 ################################################################################
-# affichage des graphes
+# graph display
 
 library(eigenmodel)
 
 l <- layout_with_fr(graphe)
 
-name = "Réseau Neuropsy ENG_1"
+name = "Graph"
 
 for (i in c(0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9)){
   
@@ -446,8 +434,6 @@ for (i in c(0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9)){
   legend(x=-1.5, y=0, legend = Legend2, pch=21,
          col="#777777", pt.bg=Couleurs2, pt.cex=2, cex=.8, bty="n", ncol=1)
   
-  # Détection de communautés
-  
   # Weighted Community detection based on Multilevel
   louv_G <- cluster_louvain(net)
   c_m <- membership(louv_G)
@@ -455,7 +441,7 @@ for (i in c(0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9)){
   title(main = paste("Multilevel modularité : ",round(modularity(louv_G),2)))
   
   
-  # Modèle latent
+  # latent model
   A <- get.adjacency(net, sparse = FALSE)
   leig.fit1 <- eigenmodel_mcmc(A, R=2, S=11000,burn=10000)
   lat.sp.1 <- eigen(leig.fit1$ULU_postmean)$vec[, 1:2]
@@ -469,7 +455,7 @@ for (i in c(0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9)){
   
 }
 
-#### Mesures globales sur graphe neuropsy seuillé
+#### global measurements on thresholded graphs
 
 hist_modularity <- array()
 hist_density <- array()
@@ -515,10 +501,10 @@ legend("left", legend=c("Naming 1", "Naming 2", "Engel 1", "Engel 2"),
        lty = 1:2, cex=0.8, inset = 0.02)
 
 ################################################################################
-# Boostrap sur les caractéristiques du graphe de tests
+# Boostrap
 ################################################################################
 
-# Fonctions
+# Functions
 
 library(psych)
 
@@ -526,7 +512,6 @@ library(psych)
 library(CINNA)
 node_harmonic <- function(x,d) {
   data = x[d,]
-  # corr_data <- rcorr(as.matrix(data),type="pearson")
   corr_data <- corr.test(as.matrix(data),method="pearson",adjust='holm')
   corr_matrix <- corr_data$r
   p_vals <- corr_data$P
@@ -541,7 +526,6 @@ node_harmonic <- function(x,d) {
 # Weighted clustering Coefficient
 trans_local <- function(x,d) {
   data = x[d,]
-  # corr_data <- rcorr(as.matrix(data),type="pearson")
   corr_data <- corr.test(as.matrix(data),method="pearson",adjust='holm')
   corr_matrix <- corr_data$r
   p_vals <- corr_data$P
@@ -556,7 +540,6 @@ trans_local <- function(x,d) {
 # Node Betweenness
 node_betweenness <- function(x,d) {
   data = x[d,]
-  # corr_data <- rcorr(as.matrix(data),type="pearson")
   corr_data <- corr.test(as.matrix(data),method="pearson",adjust='holm')
   corr_matrix <- corr_data$r
   p_vals <- corr_data$P
@@ -570,7 +553,6 @@ node_betweenness <- function(x,d) {
 # Strength
 node_strength <- function(x,d) {
   data = x[d,]
-  # corr_data <- rcorr(as.matrix(data),type="pearson")
   corr_data <- corr.test(as.matrix(data),method="pearson",adjust='holm')
   corr_matrix <- corr_data$r
   p_vals <- corr_data$P
@@ -584,7 +566,6 @@ node_strength <- function(x,d) {
 # Degree
 node_degree <- function(x,d) {
   data = x[d,]
-  # corr_data <- rcorr(as.matrix(data),type="pearson")
   corr_data <- corr.test(as.matrix(data),method="pearson",adjust='holm')
   corr_matrix <- corr_data$r
   p_vals <- corr_data$P
@@ -610,22 +591,7 @@ library(rstatix)
 
 Clustering_coeff = boot(nam_1, trans_local, 1000)
 
-# boxplot(Clustering_coeff$t[,1:9],col = Couleurs3[1], names = names(data[,16:24]), las=2, ylim = c(0, 1))
-# title(main = "NAM_1 Clustering Coefficient pondéré")
-
 Clustering_coeff_2 = boot(nam_2, trans_local, 1000)
-
-# boxplot(Clustering_coeff_2$t[,1:9],col = Couleurs3[1], names = names(data[,16:24]), las=2, ylim = c(0, 1))
-# title(main = "NAM_2 Clustering Coefficient pondéré")
-
-
-# pvalue <- array()
-# for (i in 1:32){  
-#   t <- t.test(Clustering_coeff$t[,i],Clustering_coeff_2$t[,i])
-#   pvalue[i] <-  format(round(t$p.value, 3), nsmall = 3) 
-# }
-# pvalue_Clustering_coeff <- rbind(names(data[,16:47]), pvalue)
-# write.csv(pvalue_Clustering_coeff,"pvalue_Clustering_ENG.csv")
 
 
 df1 <- Clustering_coeff$t[,1:9]
@@ -634,7 +600,6 @@ colnames(df1) <- names(data[,16:24])
 df2 <- Clustering_coeff_2$t[,1:9]
 colnames(df2) <- names(data[,16:24])
 
-# soustraction pour mesure d'écart entre sélectionnés et non-sélectionnés en ML
 delta=abs(df1-df2)
 # write.csv(delta,"Clustering_NAM1-NAM2.csv")
 delta_ML=subset(delta, select= c("VMI","AMI","NAM","TMT"))
@@ -668,13 +633,11 @@ stat.test <- data_Clustering_coeff %>%
   add_significance("p.adj")
 stat.test
 
-# Créer un box plot
 bxp <- ggboxplot(
   data_Clustering_coeff, x = "Node", y = "Clustering_coeff", 
   color = "NAM_groupe", palette = c("#00AFBB", "#E7B800")
 )
 
-# Ajoutez des p-values sur les graphiques en box plot
 stat.test <- stat.test %>%
   add_xy_position(x = "Node", dodge = 0.8)
 
@@ -691,24 +654,7 @@ bxp + stat_pvalue_manual(
 
 node_betweenness_1 = boot(eng_1, node_betweenness, 1000)
 
-# boxplot(node_betweenness_1$t[,1:9],col = Couleurs3[2], names = names(data[,16:24]), las=2, ylim = c(0, 100))
-# title(main = "NAM_1 Node Betweenness")
-
 node_betweenness_2 = boot(eng_2, node_betweenness, 1000)
-
-# boxplot(node_betweenness_2$t[,1:9],col = Couleurs3[2], names = names(data[,16:24]), las=2, ylim = c(0, 100))
-# title(main = "NAM_2 Node Betweenness")
-
-
-
-# pvalue <- array()
-# for (i in 1:32){  
-#   t <- t.test(node_betweenness_1$t[,i],node_betweenness_2$t[,i])
-#   pvalue[i] <-  format(round(t$p.value, 3), nsmall = 3) 
-# }
-# pvalue_node_betweenness <- rbind(names(data[,16:47]), pvalue)
-# write.csv(pvalue_node_betweenness,"pvalue_node_betweenness_ENG.csv")
-
 
 df1 <- node_betweenness_1$t[,1:9]
 colnames(df1) <- names(data[,16:24])
@@ -747,13 +693,11 @@ stat.test <- data_node_betweenness %>%
   add_significance("p.adj")
 stat.test
 
-# Créer un box plot
 bxp <- ggboxplot(
   data_node_betweenness, x = "Node", y = "node_betweenness", 
   color = "ENG_groupe", palette = c("#00AFBB", "#E7B800")
 )
 
-# Ajoutez des p-values sur les graphiques en box plot
 stat.test <- stat.test %>%
   add_xy_position(x = "Node", dodge = 0.8)
 
@@ -770,25 +714,7 @@ bxp + stat_pvalue_manual(
 
 node_strength_1 = boot(nam_1, node_strength, 1000)
 
-
-# boxplot(node_strength_1$t[,1:9],col = Couleurs3[3], names = names(data[,16:24]), las=2, ylim=c(0,15))
-# title(main = "ENG_1 Node Strength")
-
 node_strength_2 = boot(nam_2, node_strength, 1000)
-
-
-# boxplot(node_strength_2$t[,1:9],col = Couleurs3[3], names = names(data[,16:24]), las=2, ylim=c(0,15))
-# title(main = "ENG_2 Node Strength")
-
-
-# pvalue <- array()
-# for (i in 1:32){  
-#   t <- t.test(node_strength_1$t[,i],node_strength_2$t[,i])
-#   pvalue[i] <-  format(round(t$p.value, 3), nsmall = 3) 
-# }
-# pvalue_node_strength <- rbind(names(data[,16:47]), pvalue)
-# write.csv(pvalue_node_strength,"pvalue_node_strength_ENG.csv")
-
 
 df1 <- node_strength_1$t[,1:9]
 colnames(df1) <- names(data[,16:24])
@@ -796,7 +722,6 @@ colnames(df1) <- names(data[,16:24])
 df2 <- node_strength_2$t[,1:9]
 colnames(df2) <- names(data[,16:24])
 
-# soustraction pour mesure d'écart entre sélectionnés et non-sélectionnés en ML
 delta=abs(df1-df2)
 write.csv(delta,"Strength_NAM1-NAM2.csv")
 # delta_ML=subset(delta, select= c("VMI","AMI","NAM","TMT"))
@@ -828,13 +753,12 @@ stat.test <- data_node_strength %>%
   add_significance("p.adj")
 stat.test
 
-# Créer un box plot
+
 bxp <- ggboxplot(
   data_node_strength, x = "Node", y = "Strength", 
   color = "NAM_groupe", palette = c("#00AFBB", "#E7B800")
 )
 
-# Ajoutez des p-values sur les graphiques en box plot
 stat.test <- stat.test %>%
   add_xy_position(x = "Node", dodge = 0.8)
 
@@ -852,25 +776,7 @@ bxp + stat_pvalue_manual(
 
 node_harmonic_1 = boot(eng_1, node_harmonic, 1000)
 
-
-# boxplot(node_harmonic_1$t[,1:9],col = Couleurs3[3], names = names(data[,16:24]), las=2, ylim=c(0,30))
-# title(main = "eng_1 Node harmonic")
-
 node_harmonic_2 = boot(eng_2, node_harmonic, 1000)
-
-
-# boxplot(node_harmonic_2$t[,1:9],col = Couleurs3[3], names = names(data[,16:24]), las=2, ylim=c(0,30))
-# title(main = "ENG_2 Node harmonic")
-
-
-# pvalue <- array()
-# for (i in 1:32){  
-#   t <- t.test(node_harmonic_1$t[,i],node_harmonic_2$t[,i])
-#   pvalue[i] <-  format(round(t$p.value, 3), nsmall = 3) 
-# }
-# pvalue_node_harmonic <- rbind(names(data[,16:47]), pvalue)
-# write.csv(pvalue_node_harmonic,"pvalue_node_harmonic_ENG.csv")
-
 
 df1 <- node_harmonic_1$t[,1:9]
 colnames(df1) <- names(data[,16:24])
@@ -878,8 +784,6 @@ colnames(df1) <- names(data[,16:24])
 df2 <- node_harmonic_2$t[,1:9]
 colnames(df2) <- names(data[,16:24])
 
-
-# soustraction pour mesure d'écart entre sélectionnés et non-sélectionnés en ML
 delta=abs(df1-df2)
 # write.csv(delta,"Strength_NAM1-NAM2.csv")
 delta_ML=subset(delta, select= c("VMI","AMI","NAM","TMT"))
@@ -911,13 +815,11 @@ stat.test <- data_node_harmonic %>%
   add_significance("p.adj")
 stat.test
 
-# Créer un box plot
 bxp <- ggboxplot(
   data_node_harmonic, x = "Node", y = "harmonic", 
   color = "NAM_groupe", palette = c("#00AFBB", "#E7B800")
 )
 
-# Ajoutez des p-values sur les graphiques en box plot
 stat.test <- stat.test %>%
   add_xy_position(x = "Node", dodge = 0.8)
 
@@ -931,25 +833,7 @@ bxp + stat_pvalue_manual(
 
 node_degree_1 = boot(eng_1, node_degree, 1000)
 
-
-# boxplot(node_degree_1$t[,1:9],col = Couleurs3[3], names = names(data[,16:24]), las=2, ylim=c(0,15))
-# title(main = "ENG_1 Node degree")
-
 node_degree_2 = boot(eng_2, node_degree, 1000)
-
-
-# boxplot(node_degree_2$t[,1:9],col = Couleurs3[3], names = names(data[,16:24]), las=2, ylim=c(0,15))
-# title(main = "ENG_2 Node degree")
-
-
-# pvalue <- array()
-# for (i in 1:32){  
-#   t <- t.test(node_degree_1$t[,i],node_degree_2$t[,i])
-#   pvalue[i] <-  format(round(t$p.value, 3), nsmall = 3) 
-# }
-# pvalue_node_degree <- rbind(names(data[,16:47]), pvalue)
-# write.csv(pvalue_node_degree,"pvalue_node_degree_ENG.csv")
-
 
 df1 <- node_degree_1$t[,1:9]
 colnames(df1) <- names(data[,16:24])
@@ -957,7 +841,6 @@ colnames(df1) <- names(data[,16:24])
 df2 <- node_degree_2$t[,1:9]
 colnames(df2) <- names(data[,16:24])
 
-# soustraction pour mesure d'écart entre sélectionnés et non-sélectionnés en ML
 delta=abs(df1-df2)
 write.csv(delta,"degree_NAM1-NAM2.csv")
 delta_ML=subset(delta, select= c("VMI","AMI","NAM","TMT"))
@@ -989,13 +872,11 @@ stat.test <- data_node_degree %>%
   add_significance("p.adj")
 stat.test
 
-# Créer un box plot
 bxp <- ggboxplot(
   data_node_degree, x = "Node", y = "degree", 
   color = "NAM_groupe", palette = c("#00AFBB", "#E7B800")
 )
 
-# Ajoutez des p-values sur les graphiques en box plot
 stat.test <- stat.test %>%
   add_xy_position(x = "Node", dodge = 0.8)
 
